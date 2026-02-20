@@ -1,7 +1,7 @@
 # 键盘去抖动 (Keyboard Unchatter)
 
 一个 Windows 键盘去抖动工具，用于过滤机械键盘抖动，消除键盘连键现象。
-<img width="1284" height="842" alt="screenshot-20260220-225628" src="https://github.com/user-attachments/assets/6c1a93b0-f0d8-425b-9568-d7faecb6fa0c" />
+<img width="1128" height="757" alt="screenshot-20260220-225628" src="https://github.com/user-attachments/assets/977d4261-c033-40df-b323-23694fc2d3e3" />
 
 ## 功能
 

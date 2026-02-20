@@ -1000,6 +1000,9 @@ namespace keyboard_unchatter_csharp
                     File.Delete(tempPath);
                 }
 
+                // 清理可能残留的临时文件
+                CleanupTempFiles(exePath);
+
                 string verify = ReadRuntimeConfigFromExe(exePath);
                 return string.Equals(verify, json, StringComparison.Ordinal);
             }
@@ -1015,7 +1018,54 @@ namespace keyboard_unchatter_csharp
                 catch
                 {
                 }
+                CleanupTempFiles(exePath);
                 return false;
+            }
+        }
+
+        private static void CleanupTempFiles(string exePath)
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(exePath);
+                string fileName = Path.GetFileName(exePath);
+                
+                if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+                {
+                    return;
+                }
+
+                // 清理 .tmp 文件
+                string tempPath = exePath + ".tmp";
+                if (File.Exists(tempPath))
+                {
+                    File.Delete(tempPath);
+                }
+
+                // 清理 Windows File.Replace 产生的备份文件 (例如: exe~RFxxxxx.TMP)
+                try
+                {
+                    string[] tempFiles = Directory.GetFiles(directory, fileName + "~*");
+                    foreach (string tempFile in tempFiles)
+                    {
+                        try
+                        {
+                            File.Delete(tempFile);
+                        }
+                        catch
+                        {
+                            // 忽略单个文件删除失败
+                        }
+                    }
+                }
+                catch
+                {
+                    // 忽略目录扫描失败
+                }
+            }
+            catch
+            {
+                // 忽略所有清理错误
             }
         }
 

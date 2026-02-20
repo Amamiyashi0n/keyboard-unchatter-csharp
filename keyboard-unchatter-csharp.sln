@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.36631.11
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "keyboard-unchatter-csharp", "keyboard-unchatter-csharp.csproj", "{71040DB1-D8EB-4750-8D98-45FAAE8C1523}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71040DB1-D8EB-4750-8D98-45FAAE8C1523}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71040DB1-D8EB-4750-8D98-45FAAE8C1523}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71040DB1-D8EB-4750-8D98-45FAAE8C1523}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71040DB1-D8EB-4750-8D98-45FAAE8C1523}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FCB34081-988A-4249-88AB-DE1EFC5AA913}
+	EndGlobalSection
+EndGlobal

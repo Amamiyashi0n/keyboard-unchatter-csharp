@@ -1,0 +1,426 @@
+<Window x:Class="keyboard_unchatter_csharp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:keyboard_unchatter_csharp"
+        mc:Ignorable="d"
+        Title="键盘去抖动"
+        Height="680"
+        Width="1040"
+        MinHeight="420"
+        MinWidth="680"
+        FontFamily="Microsoft YaHei">
+    <Window.Resources>
+        <Storyboard x:Key="ActivateButtonToActive" Storyboard.TargetName="ActivateButton">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)">
+                <SplineDoubleKeyFrame Value="0.98" KeyTime="0:0:0.04" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1.06" KeyTime="0:0:0.14" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.28" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)">
+                <SplineDoubleKeyFrame Value="0.98" KeyTime="0:0:0.04" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1.06" KeyTime="0:0:0.14" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.28" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+            <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="Background.(SolidColorBrush.Color)">
+                <SplineColorKeyFrame Value="#FF6200EE" KeyTime="0:0:0"/>
+                <SplineColorKeyFrame Value="#FFFF6F00" KeyTime="0:0:0.22" KeySpline="0.2,0,0.2,1"/>
+            </ColorAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ActivateText" Storyboard.TargetProperty="Opacity">
+                <SplineDoubleKeyFrame Value="0" KeyTime="0:0:0.16" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="StopText" Storyboard.TargetProperty="Opacity">
+                <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.16" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+        <Storyboard x:Key="ActivateButtonToInactive" Storyboard.TargetName="ActivateButton">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)">
+                <SplineDoubleKeyFrame Value="0.98" KeyTime="0:0:0.04" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1.06" KeyTime="0:0:0.14" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.28" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)">
+                <SplineDoubleKeyFrame Value="0.98" KeyTime="0:0:0.04" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1.06" KeyTime="0:0:0.14" KeySpline="0.2,0,0.2,1"/>
+                <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.28" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+            <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="Background.(SolidColorBrush.Color)">
+                <SplineColorKeyFrame Value="#FFFF6F00" KeyTime="0:0:0"/>
+                <SplineColorKeyFrame Value="#FF6200EE" KeyTime="0:0:0.22" KeySpline="0.2,0,0.2,1"/>
+            </ColorAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ActivateText" Storyboard.TargetProperty="Opacity">
+                <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.16" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="StopText" Storyboard.TargetProperty="Opacity">
+                <SplineDoubleKeyFrame Value="0" KeyTime="0:0:0.16" KeySpline="0.2,0,0.2,1"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+    </Window.Resources>
+    <Grid Background="{StaticResource SurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="24,18">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button x:Name="NavToggleButton" Style="{StaticResource NavToggleButton}" Margin="0,0,12,0" Foreground="White" Click="OnNavToggleClick">
+                    <Canvas Width="24" Height="24" Background="Transparent">
+                        <!-- Material Design Hamburger Menu Icon -->
+                        <Rectangle Canvas.Left="2" Canvas.Top="4" Width="20" Height="2.5" Fill="White" RadiusX="1.25" RadiusY="1.25"/>
+                        <Rectangle Canvas.Left="2" Canvas.Top="10.75" Width="20" Height="2.5" Fill="White" RadiusX="1.25" RadiusY="1.25"/>
+                        <Rectangle Canvas.Left="2" Canvas.Top="17.5" Width="20" Height="2.5" Fill="White" RadiusX="1.25" RadiusY="1.25"/>
+                    </Canvas>
+                </Button>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="键盘去抖动" Style="{StaticResource TitleText}"/>
+                    <TextBlock Text="过滤机械键盘抖动，消除键盘连键" Style="{StaticResource SubtitleText}" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                    <Border x:Name="StatusBadge" CornerRadius="16" Background="#26FFFFFF" BorderBrush="#33FFFFFF" BorderThickness="1" Padding="10,6" Margin="0,6,0,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse x:Name="StatusDot" Width="12" Height="12" Fill="{StaticResource InactiveBrush}" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="StatusText" Text="未启用" Foreground="White" FontWeight="SemiBold" FontSize="15"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="NavColumn" Width="260"/>
+                <ColumnDefinition x:Name="NavSpacerColumn" Width="24"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Rectangle RadiusX="20" RadiusY="20" Fill="{StaticResource NavBackgroundBrush}">
+                    <Rectangle.Effect>
+                        <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.12"/>
+                    </Rectangle.Effect>
+                </Rectangle>
+                <Border x:Name="NavContainer" Background="{StaticResource NavBackgroundBrush}" Padding="18,20" CornerRadius="20" ClipToBounds="True">
+                    <ScrollViewer x:Name="NavScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <Grid>
+                            <StackPanel x:Name="NavExpandedPanel">
+                                <TextBlock Text="导航" Style="{StaticResource NavGroupTitleText}"/>
+                                <ListBox x:Name="NavMainList" Style="{StaticResource NavListBox}" SelectionChanged="OnNavMainSelectionChanged" PreviewKeyDown="OnNavListPreviewKeyDown">
+                                    <ListBox.ItemContainerStyle>
+                                        <StaticResource ResourceKey="NavListBoxItem"/>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBoxItem>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xE80F;" Width="20" FontFamily="Segoe MDL2 Assets" FontSize="18" TextAlignment="Center" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                            <TextBlock Text="主页" FontSize="15" Margin="12,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                        </StackPanel>
+                                    </ListBoxItem>
+                                    <ListBoxItem>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xE9D2;" Width="20" FontFamily="Segoe MDL2 Assets" FontSize="18" TextAlignment="Center" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                            <TextBlock Text="统计" FontSize="15" Margin="12,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                        </StackPanel>
+                                    </ListBoxItem>
+                                    <ListBoxItem>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xE946;" Width="20" FontFamily="Segoe MDL2 Assets" FontSize="18" TextAlignment="Center" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                            <TextBlock Text="关于" FontSize="15" Margin="12,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                        </StackPanel>
+                                    </ListBoxItem>
+                                </ListBox>
+                            </StackPanel>
+
+                            <StackPanel x:Name="NavCompactPanel" Visibility="Collapsed">
+                                <ListBox x:Name="NavMainCompactList" Style="{StaticResource NavListBox}" SelectionChanged="OnNavMainSelectionChanged" PreviewKeyDown="OnNavListPreviewKeyDown">
+                                    <ListBox.ItemContainerStyle>
+                                        <StaticResource ResourceKey="NavCompactListBoxItem"/>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBoxItem ToolTip="主页">
+                                        <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                    </ListBoxItem>
+                                    <ListBoxItem ToolTip="统计">
+                                        <TextBlock Text="&#xE9D2;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                    </ListBoxItem>
+                                    <ListBoxItem ToolTip="关于">
+                                        <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                    </ListBoxItem>
+                                </ListBox>
+
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Column="2">
+                <Grid x:Name="HomePage">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="设置" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="启动选项与过滤阈值" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,16"/>
+
+                            <CheckBox x:Name="OpenMinimizedCheckBox" Content="启动时最小化到托盘" Margin="0,0,0,8" Checked="OnOpenMinimizedChanged" Unchecked="OnOpenMinimizedChanged"/>
+                            <CheckBox x:Name="CloseToTrayCheckBox" Content="关闭程序后在托盘后台运行" Margin="0,0,0,16" Checked="OnCloseToTrayChanged" Unchecked="OnCloseToTrayChanged"/>
+
+                            <TextBlock Text="抖动阈值 (毫秒)" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center" Height="48">
+                                <Slider x:Name="ThresholdSlider" Minimum="1" Maximum="200" Width="220" VerticalAlignment="Center" ValueChanged="OnThresholdValueChanged"/>
+                                <TextBox x:Name="ThresholdInputBox" Style="{StaticResource OutlinedTextBox}" Width="64" Height="40" Margin="12,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Center" LostFocus="OnThresholdLostFocus" PreviewTextInput="OnThresholdPreviewTextInput" PreviewKeyDown="OnThresholdPreviewKeyDown"/>
+                            </StackPanel>
+                            <Button x:Name="ApplyThresholdButton" Style="{StaticResource OutlinedButton}" Margin="0,12,0,0" Click="OnApplyThresholdClick" MinWidth="96" Height="32" Padding="12,4" HorizontalAlignment="Left" RenderTransformOrigin="0.5,0.5">
+                                <Button.BorderBrush>
+                                    <SolidColorBrush Color="#FF6200EE"/>
+                                </Button.BorderBrush>
+                                <Button.Foreground>
+                                    <SolidColorBrush Color="#FF6200EE"/>
+                                </Button.Foreground>
+                                <Button.Background>
+                                    <SolidColorBrush Color="#00FFFFFF"/>
+                                </Button.Background>
+                                <Button.Content>
+                                    <Grid>
+                                        <TextBlock x:Name="ApplyText" Text="应用" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="ApplyCheck" Text="√" Opacity="0" Foreground="White" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                            <TextBlock.RenderTransform>
+                                                <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                            </TextBlock.RenderTransform>
+                                        </TextBlock>
+                                    </Grid>
+                                </Button.Content>
+                                <Button.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                </Button.RenderTransform>
+                                <Button.Triggers>
+                                    <EventTrigger RoutedEvent="Button.Click">
+                                        <BeginStoryboard HandoffBehavior="SnapshotAndReplace">
+                                            <Storyboard>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)">
+                                                    <SplineDoubleKeyFrame Value="0.98" KeyTime="0:0:0.04" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1.08" KeyTime="0:0:0.12" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.3" KeySpline="0.2,0,0.2,1"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)">
+                                                    <SplineDoubleKeyFrame Value="0.98" KeyTime="0:0:0.04" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1.08" KeyTime="0:0:0.12" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.3" KeySpline="0.2,0,0.2,1"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="Background.(SolidColorBrush.Color)">
+                                                    <SplineColorKeyFrame Value="#332620EE" KeyTime="0:0:0.06" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#FF2E7D32" KeyTime="0:0:0.18" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#FF2E7D32" KeyTime="0:0:0.55" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#00FFFFFF" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </ColorAnimationUsingKeyFrames>
+                                                <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)">
+                                                    <SplineColorKeyFrame Value="#FF2E7D32" KeyTime="0:0:0.18" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#FF2E7D32" KeyTime="0:0:0.55" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#FF6200EE" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </ColorAnimationUsingKeyFrames>
+                                                <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="Foreground.(SolidColorBrush.Color)">
+                                                    <SplineColorKeyFrame Value="#FFFFFFFF" KeyTime="0:0:0.18" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#FFFFFFFF" KeyTime="0:0:0.55" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineColorKeyFrame Value="#FF6200EE" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </ColorAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ApplyText" Storyboard.TargetProperty="Opacity">
+                                                    <SplineDoubleKeyFrame Value="0" KeyTime="0:0:0.18" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="0" KeyTime="0:0:0.55" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ApplyCheck" Storyboard.TargetProperty="Opacity">
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.22" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.55" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="0" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ApplyCheck" Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)">
+                                                    <SplineDoubleKeyFrame Value="1.05" KeyTime="0:0:0.22" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.35" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="0.9" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="ApplyCheck" Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)">
+                                                    <SplineDoubleKeyFrame Value="1.05" KeyTime="0:0:0.22" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="1" KeyTime="0:0:0.35" KeySpline="0.2,0,0.2,1"/>
+                                                    <SplineDoubleKeyFrame Value="0.9" KeyTime="0:0:0.9" KeySpline="0.2,0,0.2,1"/>
+                                                </DoubleAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Button.Triggers>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                </Grid>
+
+                <Border x:Name="StatsPage" Style="{StaticResource Card}" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="按键统计" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="显示被拦截与成功输入的次数" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,12"/>
+                        </StackPanel>
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Background="#FFF5F5F5" BorderBrush="#1F000000" BorderThickness="0,0,0,1" HorizontalAlignment="Stretch">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="按键" FontSize="12" Foreground="#FF424242" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,10"/>
+                                    <Border Grid.Column="1" BorderBrush="#1F000000" BorderThickness="1,0,0,0">
+                                        <TextBlock Text="成功次数" FontSize="12" Foreground="#FF424242" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,10"/>
+                                    </Border>
+                                    <Border Grid.Column="2" BorderBrush="#1F000000" BorderThickness="1,0,0,0">
+                                        <TextBlock Text="拦截次数" FontSize="12" Foreground="#FF424242" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,10"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" HorizontalAlignment="Stretch">
+                                <ItemsControl x:Name="KeyStatsList" HorizontalAlignment="Stretch">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="RowBorder" Background="White" BorderBrush="#14000000" BorderThickness="0,0,0,1" HorizontalAlignment="Stretch">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding KeyName}" Foreground="#FF212121" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,8"/>
+                                                    <Border Grid.Column="1" BorderBrush="#14000000" BorderThickness="1,0,0,0">
+                                                        <TextBlock Text="{Binding PressCount}" Foreground="#FF212121" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,8"/>
+                                                    </Border>
+                                                    <Border Grid.Column="2" BorderBrush="#14000000" BorderThickness="1,0,0,0">
+                                                        <TextBlock Text="{Binding BlockCount}" Foreground="#FF212121" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,8"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <Trigger Property="UIElement.IsMouseOver" Value="True">
+                                                    <Setter TargetName="RowBorder" Property="Background" Value="#FFF5F5F5"/>
+                                                </Trigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="SettingsPage" Style="{StaticResource Card}" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="关于" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="键盘去抖动 / Keyboard Unchatter" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Row="1" Margin="0,14,0,0" CornerRadius="12" Background="#FFEDE7F6" ClipToBounds="True" Padding="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border CornerRadius="10" Background="#FFE1D7F6" ClipToBounds="True" Width="140" Height="140">
+                                    <Image Source="pack://application:,,,/res/miku.jpg" Stretch="UniformToFill"/>
+                                </Border>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Text="世间自有尘寰在，我亦独吟游且歌。"
+                                               FontFamily="Microsoft YaHei"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="#FF212121"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Text="The world turns; I wander and sing."
+                                               FontFamily="Microsoft YaHei"
+                                               FontSize="14"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               Margin="0,6,0,0"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="2" Margin="0,14,0,0" Background="#FFF7F7F7" CornerRadius="12" Padding="14">
+                            <StackPanel>
+                                <TextBlock Text="项目链接" FontWeight="SemiBold"/>
+                                <TextBlock Text="https://github.com/Amamiyashi0n/keyboard-unchatter-csharp"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           Margin="0,6,0,0"
+                                           TextWrapping="Wrap"
+                                           TextDecorations="Underline"
+                                           Cursor="Hand"
+                                           MouseLeftButtonUp="OnProjectLinkClick"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Row="3" Margin="0,14,0,0" Background="#FFF7F7F7" CornerRadius="12" Padding="14">
+                            <StackPanel>
+                                <TextBlock Text="赞助" FontWeight="SemiBold"/>
+                                <TextBlock Text="也许您可以给予我一些小小的帮助" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="https://afdian.com/a/amamiyashion/plan"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           Margin="0,8,0,0"
+                                           TextWrapping="Wrap"
+                                           TextDecorations="Underline"
+                                           Cursor="Hand"
+                                           MouseLeftButtonUp="OnSponsorLinkClick"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="2" Padding="24,16" Background="Transparent">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="提示：启用后软件会在后台过滤重复按键，请注意游戏反作弊系统可能视作作弊程序，谨慎使用" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                <Button x:Name="ActivateButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" Click="OnActivateButtonClick" MinWidth="160" RenderTransformOrigin="0.5,0.5">
+                    <Button.Background>
+                        <SolidColorBrush Color="#FF6200EE"/>
+                    </Button.Background>
+                    <Button.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Button.RenderTransform>
+                    <Button.Content>
+                        <Grid>
+                            <TextBlock x:Name="ActivateText" Text="启用过滤" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="StopText" Text="停止过滤" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0"/>
+                        </Grid>
+                    </Button.Content>
+                </Button>
+            </Grid>
+        </Border>
+
+    </Grid>
+</Window>

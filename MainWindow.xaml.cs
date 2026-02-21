@@ -8,7 +8,6 @@ using System.Drawing.Text;
 using System.Globalization;
 using System.IO;
 using System.IO.IsolatedStorage;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -32,11 +31,10 @@ namespace keyboard_unchatter_csharp
         private bool _navExpanded = true;
         private bool _navAutoCollapsed;
         private bool _isExiting;
-        private bool _writebackLaunched;
         private bool _startupMinimizeApplied;
         private bool _closingToTray;
-
-        private static readonly byte[] _runtimeConfigMarker = Encoding.ASCII.GetBytes("KUC1CFG1");
+        private bool _runtimeActiveLoaded;
+        private bool _runtimeActive;
 
         public MainWindow()
         {
@@ -64,9 +62,18 @@ namespace keyboard_unchatter_csharp
         {
             Topmost = true;
             Activate();
-            if (keyboard_unchatter_csharp.Properties.Settings.Default.activateOnLaunch)
+            bool shouldActivate = keyboard_unchatter_csharp.Properties.Settings.Default.activateOnLaunch;
+            if (_runtimeActiveLoaded)
+            {
+                shouldActivate = _runtimeActive;
+            }
+            if (shouldActivate)
             {
                 ActivateKeyboardMonitor();
+            }
+            else
+            {
+                DeactivateKeyboardMonitor();
             }
 
             if (keyboard_unchatter_csharp.Properties.Settings.Default.openMinimized)
@@ -83,13 +90,6 @@ namespace keyboard_unchatter_csharp
                 }));
             }
 
-            try
-            {
-                SaveRuntimeConfig();
-            }
-            catch
-            {
-            }
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -99,25 +99,10 @@ namespace keyboard_unchatter_csharp
                 e.Cancel = true;
                 _closingToTray = true;
                 MinimizeToTray(true, true);
-                try
-                {
-                    SaveRuntimeConfig();
-                }
-                catch
-                {
-                }
                 return;
             }
 
             _isExiting = true;
-            StartWritebackHelperIfNeeded();
-            try
-            {
-                SaveRuntimeConfig();
-            }
-            catch
-            {
-            }
 
             if (App.KeyboardMonitor != null)
             {
@@ -216,7 +201,6 @@ namespace keyboard_unchatter_csharp
             }
             _isExiting = true;
             _allowClose = true;
-            StartWritebackHelperIfNeeded();
             Dispatcher.BeginInvoke(new Action(() => Application.Current.Shutdown()));
         }
 
@@ -590,34 +574,12 @@ namespace keyboard_unchatter_csharp
 
         private void SaveRuntimeConfig()
         {
-            try
-            {
-                bool active = App.KeyboardMonitor != null && App.KeyboardMonitor.Active;
-                string json = "{"
-                    + "\"active\":" + (active ? "true" : "false") + ","
-                    + "\"chatterThreshold\":" + ((double)keyboard_unchatter_csharp.Properties.Settings.Default.chatterThreshold).ToString("0", CultureInfo.InvariantCulture) + ","
-                    + "\"openMinimized\":" + (keyboard_unchatter_csharp.Properties.Settings.Default.openMinimized ? "true" : "false") + ","
-                    + "\"closeToTray\":" + (keyboard_unchatter_csharp.Properties.Settings.Default.closeToTray ? "true" : "false")
-                    + "}";
-
-                using (var store = IsolatedStorageFile.GetUserStoreForAssembly())
-                using (var stream = new IsolatedStorageFileStream("runtime.config.json", FileMode.Create, FileAccess.Write, store))
-                using (var writer = new StreamWriter(stream, Encoding.UTF8))
-                {
-                    writer.Write(json);
-                }
-            }
-            catch
-            {
-            }
         }
 
         private void LoadRuntimeConfig()
         {
             try
             {
-                TryExtractEmbeddedRuntimeConfigToIsolatedStorage();
-
                 string text = null;
                 using (var store = IsolatedStorageFile.GetUserStoreForAssembly())
                 {
@@ -637,10 +599,14 @@ namespace keyboard_unchatter_csharp
                 }
 
                 bool? active = ParseBool(text, "active");
+                decimal? threshold = ParseDecimal(text, "chatterThreshold");
                 bool? openMinimized = ParseBool(text, "openMinimized");
                 bool? closeToTray = ParseBool(text, "closeToTray");
-                decimal? threshold = ParseDecimal(text, "chatterThreshold");
 
+                if (threshold.HasValue)
+                {
+                    keyboard_unchatter_csharp.Properties.Settings.Default.chatterThreshold = threshold.Value;
+                }
                 if (openMinimized.HasValue)
                 {
                     keyboard_unchatter_csharp.Properties.Settings.Default.openMinimized = openMinimized.Value;
@@ -649,439 +615,15 @@ namespace keyboard_unchatter_csharp
                 {
                     keyboard_unchatter_csharp.Properties.Settings.Default.closeToTray = closeToTray.Value;
                 }
-                if (threshold.HasValue)
-                {
-                    keyboard_unchatter_csharp.Properties.Settings.Default.chatterThreshold = threshold.Value;
-                }
-
-                _suppressThresholdEvents = true;
-                OpenMinimizedCheckBox.IsChecked = keyboard_unchatter_csharp.Properties.Settings.Default.openMinimized;
-                CloseToTrayCheckBox.IsChecked = keyboard_unchatter_csharp.Properties.Settings.Default.closeToTray;
-                ThresholdSlider.Value = (double)keyboard_unchatter_csharp.Properties.Settings.Default.chatterThreshold;
-                ThresholdInputBox.Text = keyboard_unchatter_csharp.Properties.Settings.Default.chatterThreshold.ToString("0");
-                _suppressThresholdEvents = false;
-
-                if (App.KeyboardMonitor != null)
-                {
-                    App.KeyboardMonitor.ChatterTimeMs = (double)keyboard_unchatter_csharp.Properties.Settings.Default.chatterThreshold;
-                }
 
                 if (active.HasValue)
                 {
-                    if (active.Value)
-                    {
-                        ActivateKeyboardMonitor();
-                    }
-                    else
-                    {
-                        DeactivateKeyboardMonitor();
-                    }
+                    _runtimeActiveLoaded = true;
+                    _runtimeActive = active.Value;
                 }
             }
             catch
             {
-            }
-        }
-
-        private void StartWritebackHelperIfNeeded()
-        {
-            if (_writebackLaunched)
-            {
-                return;
-            }
-            _writebackLaunched = true;
-
-            try
-            {
-                string exePath = Assembly.GetExecutingAssembly().Location;
-                if (string.IsNullOrEmpty(exePath))
-                {
-                    return;
-                }
-
-                var psi = new ProcessStartInfo();
-                psi.FileName = exePath;
-                psi.Arguments = "--writeback " + Process.GetCurrentProcess().Id + " \"" + exePath + "\"";
-                psi.CreateNoWindow = true;
-                psi.UseShellExecute = false;
-                psi.WindowStyle = ProcessWindowStyle.Hidden;
-                Process.Start(psi);
-            }
-            catch
-            {
-            }
-        }
-
-        public static void RunWritebackHelper(string[] args)
-        {
-            try
-            {
-                if (args == null || args.Length < 4)
-                {
-                    return;
-                }
-
-                int pid;
-                if (!int.TryParse(args[2], out pid))
-                {
-                    return;
-                }
-
-                string exePath = args[3];
-                if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
-                {
-                    return;
-                }
-
-                try
-                {
-                    var p = Process.GetProcessById(pid);
-                    p.WaitForExit(8000);
-                }
-                catch
-                {
-                }
-
-                string json = null;
-                try
-                {
-                    using (var store = IsolatedStorageFile.GetUserStoreForAssembly())
-                    {
-                        if (IsolatedStorageFileExists(store, "runtime.config.json"))
-                        {
-                            using (var stream = new IsolatedStorageFileStream("runtime.config.json", FileMode.Open, FileAccess.Read, store))
-                            using (var reader = new StreamReader(stream, Encoding.UTF8))
-                            {
-                                json = reader.ReadToEnd();
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                }
-
-                if (string.IsNullOrEmpty(json))
-                {
-                    return;
-                }
-
-                bool writebackOk = WriteRuntimeConfigToExe(exePath, json);
-
-                if (writebackOk)
-                {
-                    try
-                    {
-                        using (var store = IsolatedStorageFile.GetUserStoreForAssembly())
-                        {
-                            if (IsolatedStorageFileExists(store, "runtime.config.json"))
-                            {
-                                store.DeleteFile("runtime.config.json");
-                            }
-                        }
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                try
-                {
-                    string dir = Path.GetDirectoryName(exePath);
-                    if (!string.IsNullOrEmpty(dir))
-                    {
-                        string legacyPath = Path.Combine(dir, "keyboard-unchatter-csharp.config.json");
-                        if (File.Exists(legacyPath))
-                        {
-                            File.Delete(legacyPath);
-                        }
-                    }
-                }
-                catch
-                {
-                }
-            }
-            catch
-            {
-            }
-        }
-
-        private void TryExtractEmbeddedRuntimeConfigToIsolatedStorage()
-        {
-            try
-            {
-                string exePath = Assembly.GetExecutingAssembly().Location;
-                if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
-                {
-                    return;
-                }
-
-                string embedded = ReadRuntimeConfigFromExe(exePath);
-                if (string.IsNullOrEmpty(embedded))
-                {
-                    return;
-                }
-
-                using (var store = IsolatedStorageFile.GetUserStoreForAssembly())
-                {
-                    if (IsolatedStorageFileExists(store, "runtime.config.json"))
-                    {
-                        return;
-                    }
-                    using (var stream = new IsolatedStorageFileStream("runtime.config.json", FileMode.Create, FileAccess.Write, store))
-                    using (var writer = new StreamWriter(stream, Encoding.UTF8))
-                    {
-                        writer.Write(embedded);
-                    }
-                }
-            }
-            catch
-            {
-            }
-        }
-
-        private static string ReadRuntimeConfigFromExe(string exePath)
-        {
-            try
-            {
-                using (var fs = new FileStream(exePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    long offset;
-                    int length;
-                    if (!TryFindRuntimeConfigTrailer(fs, out offset, out length))
-                    {
-                        return null;
-                    }
-
-                    long payloadOffset = offset + _runtimeConfigMarker.Length + 4;
-                    if (payloadOffset + length > fs.Length)
-                    {
-                        return null;
-                    }
-
-                    fs.Position = payloadOffset;
-                    byte[] data = new byte[length];
-                    int read = 0;
-                    while (read < length)
-                    {
-                        int n = fs.Read(data, read, length - read);
-                        if (n <= 0)
-                        {
-                            break;
-                        }
-                        read += n;
-                    }
-                    if (read != length)
-                    {
-                        return null;
-                    }
-                    return Encoding.UTF8.GetString(data, 0, data.Length);
-                }
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static bool TryFindRuntimeConfigTrailer(FileStream fs, out long offset, out int length)
-        {
-            offset = 0;
-            length = 0;
-
-            try
-            {
-                if (fs == null || fs.Length < _runtimeConfigMarker.Length + 4)
-                {
-                    return false;
-                }
-
-                long searchStart = fs.Length - 1024 * 1024;
-                if (searchStart < 0)
-                {
-                    searchStart = 0;
-                }
-
-                int searchLen = (int)(fs.Length - searchStart);
-                byte[] buffer = new byte[searchLen];
-                fs.Position = searchStart;
-                int got = 0;
-                while (got < searchLen)
-                {
-                    int n = fs.Read(buffer, got, searchLen - got);
-                    if (n <= 0)
-                    {
-                        break;
-                    }
-                    got += n;
-                }
-
-                if (got != searchLen)
-                {
-                    return false;
-                }
-
-                for (int i = buffer.Length - (_runtimeConfigMarker.Length + 4); i >= 0; i--)
-                {
-                    bool match = true;
-                    for (int j = 0; j < _runtimeConfigMarker.Length; j++)
-                    {
-                        if (buffer[i + j] != _runtimeConfigMarker[j])
-                        {
-                            match = false;
-                            break;
-                        }
-                    }
-                    if (!match)
-                    {
-                        continue;
-                    }
-
-                    int len = BitConverter.ToInt32(buffer, i + _runtimeConfigMarker.Length);
-                    if (len < 0)
-                    {
-                        continue;
-                    }
-
-                    long payloadStart = searchStart + i + _runtimeConfigMarker.Length + 4;
-                    long available = fs.Length - payloadStart;
-                    if (len > available)
-                    {
-                        continue;
-                    }
-
-                    offset = searchStart + i;
-                    length = len;
-                    return true;
-                }
-
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static bool WriteRuntimeConfigToExe(string exePath, string json)
-        {
-            string tempPath = exePath + ".tmp";
-            try
-            {
-                byte[] payload = Encoding.UTF8.GetBytes(json);
-                byte[] lenBytes = BitConverter.GetBytes(payload.Length);
-
-                using (var input = new FileStream(exePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (var output = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    long offset;
-                    int length;
-                    long copyLen = input.Length;
-                    if (TryFindRuntimeConfigTrailer(input, out offset, out length))
-                    {
-                        copyLen = offset;
-                    }
-
-                    input.Position = 0;
-                    CopyBytes(input, output, copyLen);
-
-                    output.Write(_runtimeConfigMarker, 0, _runtimeConfigMarker.Length);
-                    output.Write(lenBytes, 0, lenBytes.Length);
-                    output.Write(payload, 0, payload.Length);
-                }
-
-                try
-                {
-                    File.Replace(tempPath, exePath, null);
-                }
-                catch
-                {
-                    File.Copy(tempPath, exePath, true);
-                    File.Delete(tempPath);
-                }
-
-                // 清理可能残留的临时文件
-                CleanupTempFiles(exePath);
-
-                string verify = ReadRuntimeConfigFromExe(exePath);
-                return string.Equals(verify, json, StringComparison.Ordinal);
-            }
-            catch
-            {
-                try
-                {
-                    if (File.Exists(tempPath))
-                    {
-                        File.Delete(tempPath);
-                    }
-                }
-                catch
-                {
-                }
-                CleanupTempFiles(exePath);
-                return false;
-            }
-        }
-
-        private static void CleanupTempFiles(string exePath)
-        {
-            try
-            {
-                string directory = Path.GetDirectoryName(exePath);
-                string fileName = Path.GetFileName(exePath);
-                
-                if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
-                {
-                    return;
-                }
-
-                // 清理 .tmp 文件
-                string tempPath = exePath + ".tmp";
-                if (File.Exists(tempPath))
-                {
-                    File.Delete(tempPath);
-                }
-
-                // 清理 Windows File.Replace 产生的备份文件 (例如: exe~RFxxxxx.TMP)
-                try
-                {
-                    string[] tempFiles = Directory.GetFiles(directory, fileName + "~*");
-                    foreach (string tempFile in tempFiles)
-                    {
-                        try
-                        {
-                            File.Delete(tempFile);
-                        }
-                        catch
-                        {
-                            // 忽略单个文件删除失败
-                        }
-                    }
-                }
-                catch
-                {
-                    // 忽略目录扫描失败
-                }
-            }
-            catch
-            {
-                // 忽略所有清理错误
-            }
-        }
-
-        private static void CopyBytes(Stream input, Stream output, long count)
-        {
-            byte[] buffer = new byte[81920];
-            long remaining = count;
-            while (remaining > 0)
-            {
-                int read = input.Read(buffer, 0, remaining > buffer.Length ? buffer.Length : (int)remaining);
-                if (read <= 0)
-                {
-                    break;
-                }
-                output.Write(buffer, 0, read);
-                remaining -= read;
             }
         }
 

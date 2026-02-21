@@ -11,22 +11,6 @@ namespace keyboard_unchatter_csharp
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            string[] args = null;
-            try
-            {
-                args = Environment.GetCommandLineArgs();
-            }
-            catch
-            {
-            }
-
-            if (args != null && args.Length >= 2 && string.Equals(args[1], "--writeback", StringComparison.OrdinalIgnoreCase))
-            {
-                global::keyboard_unchatter_csharp.MainWindow.RunWritebackHelper(args);
-                Shutdown();
-                return;
-            }
-
             base.OnStartup(e);
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
             InputHook = new InputHook();
